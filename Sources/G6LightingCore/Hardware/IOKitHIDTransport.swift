@@ -6,20 +6,20 @@ import IOKit.hid
 /// each report as an Output SET_REPORT control transfer. Stateless across calls
 /// (manager + device opened/closed per send burst), matching the original behaviour
 /// that already proved reliable on the user's hardware.
-public final class IOKitHIDTransport: HIDTransport, @unchecked Sendable {
-    public let vendorID: UInt16
-    public let productID: UInt16
-    public let usagePage: UInt32
+final class IOKitHIDTransport: HIDTransport, @unchecked Sendable {
+    let vendorID: UInt16
+    let productID: UInt16
+    let usagePage: UInt32
 
     private let queue = DispatchQueue(label: "g6.transport", qos: .userInitiated)
 
-    public init(vendorID: UInt16, productID: UInt16, usagePage: UInt32) {
+    init(vendorID: UInt16, productID: UInt16, usagePage: UInt32) {
         self.vendorID = vendorID
         self.productID = productID
         self.usagePage = usagePage
     }
 
-    public func send(reports: [[UInt8]]) async throws {
+    func send(reports: [[UInt8]]) async throws {
         try await withCheckedThrowingContinuation { (cont: CheckedContinuation<Void, Error>) in
             queue.async {
                 do {

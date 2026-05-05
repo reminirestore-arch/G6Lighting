@@ -12,7 +12,6 @@ public final class DeviceMonitor: @unchecked Sendable {
 
     private let manager: IOHIDManager
     private let onEvent: @Sendable (Event) -> Void
-    private var rawSelf: UnsafeMutableRawPointer?
 
     public init(vendorID: UInt16, productID: UInt16, onEvent: @escaping @Sendable (Event) -> Void) {
         self.onEvent = onEvent
@@ -28,7 +27,6 @@ public final class DeviceMonitor: @unchecked Sendable {
         self.manager = mgr
 
         let context = Unmanaged.passUnretained(self).toOpaque()
-        self.rawSelf = context
 
         let matchedCallback: IOHIDDeviceCallback = { ctx, _, _, _ in
             guard let ctx = ctx else { return }

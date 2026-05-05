@@ -46,9 +46,9 @@ struct GlowingPreview: View {
         }
         .frame(height: 110)
         .frame(maxWidth: .infinity)
-        // smooth visual interpolation — even Pulse on/off becomes a gentle throb
-        .animation(.easeInOut(duration: 0.18), value: color)
-        .animation(.easeInOut(duration: 0.18), value: brightness)
+        // Only animate the major on/off transition; per-frame color/brightness
+        // changes render immediately so the orb stays in lockstep with the LED.
+        // Sub-frame USB latency (5-15 ms) is below human perception.
         .animation(.easeInOut(duration: 0.25), value: settings.isOn)
     }
 }

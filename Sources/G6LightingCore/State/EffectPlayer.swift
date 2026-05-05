@@ -6,7 +6,9 @@ import SwiftUI
 /// from this single source of truth.
 @MainActor
 public final class EffectPlayer: ObservableObject {
-     public private(set) var currentFrame: LightingFrame = .off
+    @Published public private(set) var currentFrame: LightingFrame = .off
+
+    public init() {}
 
     private var task: Task<Void, Never>?
 
