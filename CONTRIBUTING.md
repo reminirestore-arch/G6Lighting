@@ -22,6 +22,16 @@ You only need:
 - **Test on real hardware** if you change anything in `Hardware/` (G6Protocol, G6Device, IOKitHIDTransport). The byte-exact protocol tests catch regressions in the wire format, but only the device confirms the change actually works.
 - **Match the existing style.** Read a few neighbouring files. The codebase favours small, single-purpose types and thin views.
 
+## Regenerating the app icon
+
+The icon is generated programmatically — no graphic-design tool required. After tweaking `assets/make-icon.swift`:
+
+```bash
+swift assets/make-icon.swift   # → assets/AppIcon-1024.png
+./assets/make-icns.sh           # → assets/AppIcon.icns (multi-resolution)
+./build.sh                      # bundles the new icon into G6Lighting.app
+```
+
 ## Architecture at a glance
 
 Five layers, each only depending on layers below it:

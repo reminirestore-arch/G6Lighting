@@ -52,6 +52,10 @@ build_app() {
     cp "$binary_path" "$BUNDLE_DIR/Contents/MacOS/$APP_NAME"
     chmod +x "$BUNDLE_DIR/Contents/MacOS/$APP_NAME"
 
+    if [ -f "assets/AppIcon.icns" ]; then
+        cp "assets/AppIcon.icns" "$BUNDLE_DIR/Contents/Resources/AppIcon.icns"
+    fi
+
     cat > "$BUNDLE_DIR/Contents/Info.plist" <<EOF
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -61,6 +65,8 @@ build_app() {
     <string>G6 Lighting</string>
     <key>CFBundleExecutable</key>
     <string>$APP_NAME</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundleIdentifier</key>
     <string>local.g6lighting</string>
     <key>CFBundleInfoDictionaryVersion</key>

@@ -1,6 +1,7 @@
 # G6 Lighting
 
 [![Tests](https://github.com/reminirestore-arch/G6Lighting/actions/workflows/tests.yml/badge.svg)](https://github.com/reminirestore-arch/G6Lighting/actions/workflows/tests.yml)
+[![codecov](https://codecov.io/gh/reminirestore-arch/G6Lighting/branch/main/graph/badge.svg)](https://codecov.io/gh/reminirestore-arch/G6Lighting)
 [![Release](https://img.shields.io/github/v/release/reminirestore-arch/G6Lighting?display_name=tag&sort=semver)](https://github.com/reminirestore-arch/G6Lighting/releases/latest)
 ![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)
 ![Swift](https://img.shields.io/badge/swift-6.0-orange)
