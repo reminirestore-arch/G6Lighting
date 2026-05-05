@@ -64,7 +64,9 @@ jobs:
         env:
           LLVM_PROFILE_FILE: coverage.profraw
           DYLD_FRAMEWORK_PATH: ${{ steps.testing-fw.outputs.framework_dir }}
-        run: swift run -c debug --enable-code-coverage G6LightingTestRunner --testing-library swift-testing
+        run: |
+          BIN_PATH=$(swift build -c debug --enable-code-coverage --show-bin-path)
+          "$BIN_PATH/G6LightingTestRunner" --testing-library swift-testing
 
       - name: Convert profile to LCOV
         run: |
