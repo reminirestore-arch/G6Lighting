@@ -7,8 +7,8 @@ final class LightingViewModel: ObservableObject {
     @Published private(set) var isConnected: Bool = false
 
     let settings: SettingsStore
+    let player: EffectPlayer
     private let device: G6Device
-    private var animationTask: Task<Void, Never>?
     private var cancellables: Set<AnyCancellable> = []
     private var deviceMonitor: DeviceMonitor?
     private var wakeMonitor: WakeMonitor?
@@ -16,10 +16,12 @@ final class LightingViewModel: ObservableObject {
     init(
         settings: SettingsStore,
         device: G6Device,
+        player: EffectPlayer? = nil,
         installSystemMonitors: Bool = true
     ) {
         self.settings = settings
         self.device = device
+        self.player = player ?? EffectPlayer()
 
         settings.objectWillChange
             .debounce(for: .milliseconds(80), scheduler: DispatchQueue.main)
@@ -54,8 +56,7 @@ final class LightingViewModel: ObservableObject {
     }
 
     func restart() {
-        animationTask?.cancel()
-        animationTask = Task { [weak self] in
+        Task { [weak self] in
             await self?.run()
         }
     }
@@ -65,6 +66,7 @@ final class LightingViewModel: ObservableObject {
             try await device.setRingLed(enabled: settings.ringLedOn)
 
             if !settings.isOn {
+                player.stop(showing: .off)
                 try await device.disableLogo()
                 isConnected = true
                 lastError = nil
@@ -78,26 +80,26 @@ final class LightingViewModel: ObservableObject {
                 breathingSpeed: settings.breathingSpeed,
                 cycleSpeed: settings.cycleSpeed
             )
-            try await runEffect(effect)
+            // Single source of truth: EffectPlayer ticks frames; we forward each
+            // to the device. The same player publishes currentFrame to the UI.
+            player.play(effect) { [weak self] frame in
+                guard let self else { return }
+                do {
+                    try await self.device.setColor(frame)
+                    self.isConnected = true
+                    self.lastError = nil
+                } catch is CancellationError {
+                    // restart triggered
+                } catch {
+                    self.isConnected = false
+                    self.lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
+                }
+            }
         } catch is CancellationError {
-            // ignore — restart triggered
+            // restart triggered
         } catch {
             isConnected = false
             lastError = (error as? LocalizedError)?.errorDescription ?? error.localizedDescription
-        }
-    }
-
-    private func runEffect(_ effect: LightingEffect) async throws {
-        let started = Date()
-        while !Task.isCancelled {
-            let now = Date().timeIntervalSince(started)
-            let (frame, nextDelay) = effect.frame(at: now)
-            try await device.setColor(frame)
-            isConnected = true
-            lastError = nil
-            guard let delay = nextDelay else { return }
-            let nanos = UInt64(max(0, delay) * 1_000_000_000)
-            try await Task.sleep(nanoseconds: nanos)
         }
     }
 }

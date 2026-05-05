@@ -10,6 +10,7 @@ struct G6LightingApp: App {
             ContentView()
                 .environmentObject(env.settings)
                 .environmentObject(env.viewModel)
+                .environmentObject(env.viewModel.player)
                 .environmentObject(env.autoLaunch)
         }
         .menuBarExtraStyle(.window)
