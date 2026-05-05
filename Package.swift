@@ -2,38 +2,33 @@
 import PackageDescription
 import Foundation
 
-// swift-testing's Testing.framework lives in different places depending on
-// whether the toolchain is Command Line Tools (no Xcode) or full Xcode.
-// Detect the right -F search path and the right rpath to lib_TestingInterop.dylib
-// at evaluation time so this Package.swift works in both environments
-// (local CLT, GitHub Actions macOS runner with Xcode, etc.).
-let frameworkPathCandidates = [
-    "/Library/Developer/CommandLineTools/Library/Developer/Frameworks",
-    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks",
-]
-let interopPathCandidates = [
-    "/Library/Developer/CommandLineTools/Library/Developer/usr/lib",
-    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/usr/lib",
-]
-let fm = FileManager.default
-let testFrameworkPath = frameworkPathCandidates.first(where: {
-    fm.fileExists(atPath: $0 + "/Testing.framework")
-}) ?? frameworkPathCandidates[0]
-let testInteropPath = interopPathCandidates.first(where: {
-    fm.fileExists(atPath: $0 + "/lib_TestingInterop.dylib")
-}) ?? interopPathCandidates[0]
+// swift-testing is bundled with full Xcode toolchains and the swift driver
+// can find it without any extra flags. Command Line Tools-only setups have
+// a Testing.framework but it's not on the default search path, so we have
+// to point -F + rpath at it manually. Only do that when CLT is in use.
+let cltFrameworkPath = "/Library/Developer/CommandLineTools/Library/Developer/Frameworks"
+let cltInteropPath = "/Library/Developer/CommandLineTools/Library/Developer/usr/lib"
+let xcodeFrameworkPath = "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/Library/Frameworks"
 
-let testSwiftSettings: [SwiftSetting] = [
-    .unsafeFlags(["-F", testFrameworkPath])
-]
-let testLinkerSettings: [LinkerSetting] = [
-    .unsafeFlags([
-        "-F", testFrameworkPath,
+let fm = FileManager.default
+let hasXcodeTesting = fm.fileExists(atPath: xcodeFrameworkPath + "/Testing.framework")
+let hasCLTTesting = fm.fileExists(atPath: cltFrameworkPath + "/Testing.framework")
+let needsCLTFlags = !hasXcodeTesting && hasCLTTesting
+
+let testSwiftSettings: [SwiftSetting]
+let testLinkerSettings: [LinkerSetting]
+if needsCLTFlags {
+    testSwiftSettings = [.unsafeFlags(["-F", cltFrameworkPath])]
+    testLinkerSettings = [.unsafeFlags([
+        "-F", cltFrameworkPath,
         "-framework", "Testing",
-        "-Xlinker", "-rpath", "-Xlinker", testFrameworkPath,
-        "-Xlinker", "-rpath", "-Xlinker", testInteropPath,
-    ])
-]
+        "-Xlinker", "-rpath", "-Xlinker", cltFrameworkPath,
+        "-Xlinker", "-rpath", "-Xlinker", cltInteropPath,
+    ])]
+} else {
+    testSwiftSettings = []
+    testLinkerSettings = []
+}
 
 let package = Package(
     name: "G6Lighting",
