@@ -9,7 +9,7 @@ final class LightingEngine: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var isConnected: Bool = false
 
-    private let controller = G6Controller()
+    private let device: G6Device
     private let settings: Settings
     private var animationTask: Task<Void, Never>?
     private var settingsCancellables: Set<AnyCancellable> = []
@@ -17,8 +17,9 @@ final class LightingEngine: ObservableObject {
     private var hidManager: IOHIDManager?
     private var wakeObserver: NSObjectProtocol?
 
-    init(settings: Settings) {
+    init(settings: Settings, device: G6Device = .makeReal()) {
         self.settings = settings
+        self.device = device
 
         settings.objectWillChange
             .debounce(for: .milliseconds(80), scheduler: DispatchQueue.main)
@@ -90,10 +91,10 @@ final class LightingEngine: ObservableObject {
     private func run() async {
         do {
             // Apply volume-knob ring LED state first (single shot, persisted in firmware)
-            try await controller.setRingLed(enabled: settings.ringLedOn)
+            try await device.setRingLed(enabled: settings.ringLedOn)
 
             if !settings.isOn {
-                try await controller.disable()
+                try await device.disableLogo()
                 isConnected = true
                 lastError = nil
                 return
@@ -125,12 +126,7 @@ final class LightingEngine: ObservableObject {
         while !Task.isCancelled {
             let now = Date().timeIntervalSince(started)
             let (frame, nextDelay) = effect.frame(at: now)
-            try await controller.setColor(
-                red: frame.color.red,
-                green: frame.color.green,
-                blue: frame.color.blue,
-                brightness: frame.brightness
-            )
+            try await device.setColor(frame)
             isConnected = true
             lastError = nil
             guard let delay = nextDelay else { return }
