@@ -60,6 +60,11 @@ struct EffectSection: View {
                 Text(label)
                     .font(.caption)
                     .foregroundStyle(.secondary)
+                Spacer()
+                Text(String(format: "%.1f×", value.wrappedValue))
+                    .font(.system(.caption, design: .monospaced))
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
             }
             Slider(value: value, in: 0.1...2.0)
         }

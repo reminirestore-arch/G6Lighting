@@ -13,9 +13,9 @@ struct DeviceSection: View {
                             .imageScale(.small)
                             .foregroundStyle(.secondary)
                         VStack(alignment: .leading, spacing: 1) {
-                            Text("Volume knob ring LED")
+                            Text("Volume knob light")
                                 .font(.system(size: 12))
-                            Text("Bicolor firmware indicator (not RGB)")
+                            Text("White/red status indicator")
                                 .font(.system(size: 10))
                                 .foregroundStyle(.secondary)
                         }
@@ -23,6 +23,7 @@ struct DeviceSection: View {
                 }
                 .toggleStyle(.switch)
                 .controlSize(.small)
+                .help("Toggle the ring LED around the volume knob. Hardware is white/red only — this is the firmware status indicator, not an RGB zone.")
 
                 Toggle(isOn: Binding(
                     get: { autoLaunch.isEnabled },

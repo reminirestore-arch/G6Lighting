@@ -16,9 +16,28 @@ struct ColorSection: View {
         RGBColor(red: 255, green: 255, blue: 255),
     ]
 
+    /// Cycle generates its own hue and ignores the base color, so editing
+    /// it would have no visible effect — disable the section in that mode.
+    private var isEditable: Bool { settings.mode != .cycle }
+
+    private var sectionTitle: String {
+        switch settings.mode {
+        case .staticColor: return "Color"
+        case .breathing, .pulse: return "Base color"
+        case .cycle: return "Color"
+        }
+    }
+
     public var body: some View {
-        SectionCard("Color", systemImage: "paintpalette.fill") {
+        SectionCard(sectionTitle, systemImage: "paintpalette.fill") {
             VStack(alignment: .leading, spacing: 12) {
+                if settings.mode == .cycle {
+                    Text("Color Cycle generates its own hue — base color is ignored.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+
                 // Hex input
                 HStack(spacing: 8) {
                     Text("#")
@@ -40,7 +59,7 @@ struct ColorSection: View {
                         .fill(.background.opacity(0.4))
                 )
 
-                // Preset row
+                // Preset row — auto-selects whichever swatch matches current base color
                 HStack(spacing: 6) {
                     ForEach(Array(Self.presets.enumerated()), id: \.offset) { _, preset in
                         ColorSwatchButton(
@@ -69,8 +88,11 @@ struct ColorSection: View {
                     ), tint: .blue)
                 }
             }
+            .disabled(!isEditable)
+            .opacity(isEditable ? 1.0 : 0.55)
         }
         .onAppear { updateHexFromSettings() }
+        .onChange(of: settings.color) { _, _ in updateHexFromSettings() }
     }
 
     @ViewBuilder
@@ -78,7 +100,7 @@ struct ColorSection: View {
         HStack(spacing: 8) {
             Text(label)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundStyle(tint)
+                .foregroundStyle(.primary)
                 .frame(width: 12, alignment: .leading)
             Slider(value: value, in: 0...255, step: 1)
                 .tint(tint)

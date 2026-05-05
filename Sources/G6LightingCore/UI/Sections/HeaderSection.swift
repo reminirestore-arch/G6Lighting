@@ -5,19 +5,27 @@ struct HeaderSection: View {
     @EnvironmentObject var engine: LightingViewModel
 
     public var body: some View {
-        HStack(alignment: .center) {
-            VStack(alignment: .leading, spacing: 2) {
+        HStack(alignment: .top, spacing: 10) {
+            VStack(alignment: .leading, spacing: 8) {
                 Text("Sound BlasterX G6")
                     .font(.headline)
                 StatusPill(status: status)
             }
-            Spacer()
-            Toggle("", isOn: $settings.isOn)
-                .toggleStyle(.switch)
-                .labelsHidden()
-                .scaleEffect(1.05)
-                .help(settings.isOn ? "Turn lighting off" : "Turn lighting on")
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 6) {
+                Toggle("", isOn: $settings.isOn)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+                    .help(settings.isOn ? "Turn lighting off" : "Turn lighting on")
+                    .accessibilityLabel("Lighting power")
+                Text("Lighting")
+                    .font(.system(size: 9, weight: .medium))
+                    .foregroundStyle(.secondary)
+                    .textCase(.uppercase)
+                    .kerning(0.4)
+            }
         }
+        .padding(.bottom, 4)
     }
 
     private var status: StatusPill.Status {

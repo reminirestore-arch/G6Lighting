@@ -20,23 +20,49 @@ Native macOS menu-bar app that controls the RGB X-logo and the volume-knob LED r
 - Auto-resend after USB reconnect and system wake-from-sleep
 - Persists all settings between launches
 
-## Quick start
+## Build & install
+
+The repository ships a single `build.sh` script that handles everything. No Xcode needed — just the Command Line Tools (`xcode-select --install`).
 
 ```bash
 git clone git@github.com:reminirestore-arch/G6Lighting.git
 cd G6Lighting
-./build.sh
-open G6Lighting.app
+./build.sh install        # build + copy to /Applications
 ```
 
-If macOS Gatekeeper blocks the unsigned binary the first time:
+After install the app is available everywhere a normal Mac app is:
+
+- **Spotlight**: ⌘-Space, type "G6"
+- **Launchpad**
+- **Finder → Applications**
+- Terminal: `open -a G6Lighting`
+
+The app lives in the **menu bar** (lightbulb icon, top-right). It deliberately has no Dock icon (`LSUIElement = true`). To exit: click the lightbulb → **Quit** (⌘Q).
+
+To start automatically at login, open the menu and toggle **Launch at login** — the app registers itself via `SMAppService` and you can review/revoke the permission in **System Settings → General → Login Items**.
+
+### All `build.sh` commands
+
+| Command | Effect |
+|---|---|
+| `./build.sh` (or `build`) | Compile and assemble `G6Lighting.app` in the project directory only. |
+| `./build.sh install` | Build, then copy to `/Applications` and clear the quarantine attribute. |
+| `./build.sh uninstall` | Remove `/Applications/G6Lighting.app`. (Disable login-item separately in System Settings.) |
+| `./build.sh dmg` | Build, then package `G6Lighting.dmg` for sharing. |
+| `./build.sh clean` | Delete `.build/`, the local `.app`, and any `.dmg`. |
+| `./build.sh help` | Show the same list. |
+
+### Code signing & Gatekeeper
+
+The script ad-hoc signs the bundle (`codesign --sign -`) which is enough for the local machine. `install` also strips the `com.apple.quarantine` xattr so the first launch doesn't trigger a Gatekeeper prompt.
+
+If you share the `.dmg` with someone else, the recipient will need to run this once before launching:
 
 ```bash
-xattr -dr com.apple.quarantine G6Lighting.app
-open G6Lighting.app
+xattr -dr com.apple.quarantine /Applications/G6Lighting.app
 ```
 
-The lightbulb appears in the menu bar (no Dock icon — `LSUIElement = true`).
+For frictionless distribution to many users, sign with a **Developer ID Application** certificate ($99/yr Apple Developer account) and notarize via `notarytool`. See Apple's [signing docs](https://developer.apple.com/documentation/security/notarizing_macos_software_before_distribution) — the ad-hoc `codesign` line in `build.sh` is the swap point.
 
 ## Architecture
 
