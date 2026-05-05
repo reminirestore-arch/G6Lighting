@@ -154,12 +154,14 @@ The volume-knob LED is **bicolor (white/red)** in hardware, not RGB — only on/
 
 ## Scope & related projects
 
-This app is intentionally focused on **lighting only** (X-logo RGB + volume-knob LED).
+**G6 Lighting** is intentionally a small, focused app — only RGB and ring LED. It will stay that way.
 
-For **audio DSP control** of the G6 (output toggle, SBX effects, mic boost, etc.):
+If you want **full G6 management** (lighting + audio DSP: output toggle, SBX effects, mic boost, etc.):
 
-- On Linux / Windows: [`jackbrumley/rusty-g6`](https://github.com/jackbrumley/rusty-g6) — feature-complete GUI, MIT.
-- On macOS: planned as a separate sibling project **G6 Control**. See [issue #1](https://github.com/reminirestore-arch/G6Lighting/issues/1) and [`docs/G6Control-roadmap.md`](docs/G6Control-roadmap.md). Not started yet.
+- A larger companion app **G6 Control** is planned for macOS — separate repo, will coexist with this one. Both will be installable side-by-side and use disjoint G6 HID command families. See [issue #1](https://github.com/reminirestore-arch/G6Lighting/issues/1) and [`docs/G6Control-roadmap.md`](docs/G6Control-roadmap.md). Not started yet.
+- On Linux / Windows today: [`jackbrumley/rusty-g6`](https://github.com/jackbrumley/rusty-g6) — feature-complete audio GUI, MIT, identical wire protocol.
+
+Pick whichever fits your use case — neither is a replacement for the other.
 
 ## Contributing
 
