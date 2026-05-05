@@ -1,5 +1,11 @@
 # G6 Lighting
 
+[![Tests](https://github.com/reminirestore-arch/G6Lighting/actions/workflows/tests.yml/badge.svg)](https://github.com/reminirestore-arch/G6Lighting/actions/workflows/tests.yml)
+[![Release](https://img.shields.io/github/v/release/reminirestore-arch/G6Lighting?display_name=tag&sort=semver)](https://github.com/reminirestore-arch/G6Lighting/releases/latest)
+![Platform](https://img.shields.io/badge/platform-macOS%2014%2B-blue)
+![Swift](https://img.shields.io/badge/swift-6.0-orange)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
 Native macOS menu-bar app that controls the RGB X-logo and the volume-knob LED ring of the **Creative Sound BlasterX G6** USB sound card. Creative ships no macOS software for this device — this app fills the gap, talking to the G6's vendor-specific HID interface directly.
 
 <p align="center">
@@ -145,6 +151,12 @@ The volume-knob LED is **bicolor (white/red)** in hardware, not RGB — only on/
   - Issue [#4](https://github.com/nils-skowasch/soundblaster-x-g6-cli/issues/4) by **Kaan88** (April 2026) — first public capture of the ring-LED toggle packets
 - [OpenRGB MR !451](https://gitlab.com/CalcProgrammer1/OpenRGB/-/merge_requests/451) — independent reverse of the X-logo color path
 
+## Contributing
+
+PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). For bugs and feature requests, please use the [issue tracker](https://github.com/reminirestore-arch/G6Lighting/issues).
+
 ## License
 
-Personal-use code. Not affiliated with Creative Technology Ltd.
+[MIT](LICENSE) — do whatever you want, just keep the copyright notice.
+
+Not affiliated with or endorsed by Creative Technology Ltd. The Sound Blaster name and product names are trademarks of Creative Technology Ltd.

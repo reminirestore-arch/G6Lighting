@@ -1,0 +1,55 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly.
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: A clear description of the bug, what you expected, and what you got instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Steps to reproduce
+      description: Minimal sequence of clicks/actions that triggers the issue.
+      placeholder: |
+        1. Open menu-bar popover
+        2. Switch effect to Pulse
+        3. ...
+    validations:
+      required: true
+
+  - type: input
+    id: macos-version
+    attributes:
+      label: macOS version
+      placeholder: "e.g. 14.5 (23F79)"
+    validations:
+      required: true
+
+  - type: input
+    id: g6-firmware
+    attributes:
+      label: G6 firmware (bcdDevice)
+      description: 'Run: `ioreg -r -n "Sound BlasterX G6" | grep bcdDevice`'
+      placeholder: "e.g. 0x2014"
+    validations:
+      required: true
+
+  - type: input
+    id: app-version
+    attributes:
+      label: G6 Lighting version
+      description: From the GitHub release tag, or "main @ <commit-sha>".
+      placeholder: "e.g. v0.1.0 or main @ a8d0357"
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs / screenshots
+      description: Optional. Drag-drop screenshots, or paste any relevant Console.app output.
