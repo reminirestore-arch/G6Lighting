@@ -23,10 +23,29 @@ jobs:
           swift --version
           xcrun --show-sdk-path
 
+      - name: Locate Testing.framework
+        id: testing-fw
+        run: |
+          # On Xcode toolchains the Testing.framework lives somewhere under the
+          # toolchain dir (path varies by Xcode/Swift version). Find it once
+          # and export its parent dir as DYLD_FRAMEWORK_PATH for the run steps.
+          DEV_DIR=$(xcode-select -p)
+          DIR=$(find "$DEV_DIR/Toolchains" "$DEV_DIR/Platforms" \
+                  -name 'Testing.framework' -type d 2>/dev/null | head -1)
+          if [ -z "$DIR" ]; then
+            echo "ERROR: Testing.framework not found under $DEV_DIR" >&2
+            exit 1
+          fi
+          PARENT=$(dirname "$DIR")
+          echo "Found: $DIR"
+          echo "framework_dir=$PARENT" >> "$GITHUB_OUTPUT"
+
       - name: Build (release)
         run: swift build -c release --arch arm64
 
       - name: Run tests
+        env:
+          DYLD_FRAMEWORK_PATH: ${{ steps.testing-fw.outputs.framework_dir }}
         run: swift run G6LightingTestRunner --testing-library swift-testing
 
       # Coverage: re-build the test runner with profiling, run it, then convert
@@ -37,6 +56,7 @@ jobs:
       - name: Run tests with coverage
         env:
           LLVM_PROFILE_FILE: coverage.profraw
+          DYLD_FRAMEWORK_PATH: ${{ steps.testing-fw.outputs.framework_dir }}
         run: swift run -c debug --enable-code-coverage G6LightingTestRunner --testing-library swift-testing
 
       - name: Convert profile to LCOV
