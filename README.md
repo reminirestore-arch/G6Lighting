@@ -152,6 +152,15 @@ The volume-knob LED is **bicolor (white/red)** in hardware, not RGB — only on/
   - Issue [#4](https://github.com/nils-skowasch/soundblaster-x-g6-cli/issues/4) by **Kaan88** (April 2026) — first public capture of the ring-LED toggle packets
 - [OpenRGB MR !451](https://gitlab.com/CalcProgrammer1/OpenRGB/-/merge_requests/451) — independent reverse of the X-logo color path
 
+## Scope & related projects
+
+This app is intentionally focused on **lighting only** (X-logo RGB + volume-knob LED).
+
+For **audio DSP control** of the G6 (output toggle, SBX effects, mic boost, etc.):
+
+- On Linux / Windows: [`jackbrumley/rusty-g6`](https://github.com/jackbrumley/rusty-g6) — feature-complete GUI, MIT.
+- On macOS: planned as a separate sibling project **G6 Control**. See [issue #1](https://github.com/reminirestore-arch/G6Lighting/issues/1) and [`docs/G6Control-roadmap.md`](docs/G6Control-roadmap.md). Not started yet.
+
 ## Contributing
 
 PRs welcome — see [CONTRIBUTING.md](CONTRIBUTING.md). For bugs and feature requests, please use the [issue tracker](https://github.com/reminirestore-arch/G6Lighting/issues).
