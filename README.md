@@ -2,6 +2,10 @@
 
 Native macOS menu-bar app that controls the RGB X-logo and the volume-knob LED ring of the **Creative Sound BlasterX G6** USB sound card. Creative ships no macOS software for this device — this app fills the gap, talking to the G6's vendor-specific HID interface directly.
 
+<p align="center">
+  <img src="assets/screenshot.png" alt="G6 Lighting menu-bar popover" width="380">
+</p>
+
 | | |
 |---|---|
 | Platform | macOS 14+ (Apple Silicon) |
