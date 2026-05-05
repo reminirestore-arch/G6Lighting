@@ -1,19 +1,6 @@
 import Foundation
 import SwiftUI
 
-enum LightingMode: String, CaseIterable, Identifiable, Codable {
-    case staticColor, breathing, pulse, cycle
-    var id: String { rawValue }
-    var label: String {
-        switch self {
-        case .staticColor: return "Static"
-        case .breathing: return "Breathing"
-        case .pulse: return "Pulse"
-        case .cycle: return "Color Cycle"
-        }
-    }
-}
-
 @MainActor
 final class Settings: ObservableObject {
     @AppStorage("g6.isOn") var isOn: Bool = true

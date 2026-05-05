@@ -98,16 +98,20 @@ final class LightingEngine: ObservableObject {
                 lastError = nil
                 return
             }
-            switch settings.mode {
-            case .staticColor:
-                try await sendStatic()
-            case .breathing:
-                try await runBreathing()
-            case .pulse:
-                try await runPulse()
-            case .cycle:
-                try await runCycle()
-            }
+
+            let baseColor = RGBColor(
+                red: UInt8(settings.red),
+                green: UInt8(settings.green),
+                blue: UInt8(settings.blue)
+            )
+            let effect = EffectFactory.make(
+                mode: settings.mode,
+                baseColor: baseColor,
+                brightnessPercent: settings.brightness,
+                breathingSpeed: settings.breathingSpeed,
+                cycleSpeed: settings.cycleSpeed
+            )
+            try await runEffect(effect)
         } catch is CancellationError {
             // ignore — restart triggered
         } catch {
@@ -116,73 +120,22 @@ final class LightingEngine: ObservableObject {
         }
     }
 
-    private func sendStatic() async throws {
-        let r = UInt8(settings.red), g = UInt8(settings.green), b = UInt8(settings.blue)
-        let bri = UInt8(min(255, settings.brightness * 255 / 100))
-        try await controller.setColor(red: r, green: g, blue: b, brightness: bri)
-        isConnected = true
-        lastError = nil
-    }
-
-    private func runBreathing() async throws {
-        let r = UInt8(settings.red), g = UInt8(settings.green), b = UInt8(settings.blue)
-        let baseBri = Double(settings.brightness) / 100.0
-        let speed = max(0.05, settings.breathingSpeed)
-        var phase: Double = 0
+    private func runEffect(_ effect: LightingEffect) async throws {
+        let started = Date()
         while !Task.isCancelled {
-            let intensity = (sin(phase) + 1) / 2 * baseBri
-            let bri = UInt8(max(0, min(255, intensity * 255)))
-            try await controller.setColor(red: r, green: g, blue: b, brightness: bri)
+            let now = Date().timeIntervalSince(started)
+            let (frame, nextDelay) = effect.frame(at: now)
+            try await controller.setColor(
+                red: frame.color.red,
+                green: frame.color.green,
+                blue: frame.color.blue,
+                brightness: frame.brightness
+            )
             isConnected = true
             lastError = nil
-            phase += 0.05 * speed * 2 * .pi
-            try await Task.sleep(nanoseconds: frameInterval)
+            guard let delay = nextDelay else { return }
+            let nanos = UInt64(max(0, delay) * 1_000_000_000)
+            try await Task.sleep(nanoseconds: nanos)
         }
-    }
-
-    private func runPulse() async throws {
-        let r = UInt8(settings.red), g = UInt8(settings.green), b = UInt8(settings.blue)
-        let bri = UInt8(min(255, settings.brightness * 255 / 100))
-        while !Task.isCancelled {
-            try await controller.setColor(red: r, green: g, blue: b, brightness: bri)
-            isConnected = true
-            lastError = nil
-            try await Task.sleep(nanoseconds: 400_000_000)
-            try await controller.setColor(red: 0, green: 0, blue: 0, brightness: 0)
-            try await Task.sleep(nanoseconds: 250_000_000)
-        }
-    }
-
-    private func runCycle() async throws {
-        let bri = UInt8(min(255, settings.brightness * 255 / 100))
-        let speed = max(0.05, settings.cycleSpeed)
-        var hue: Double = 0
-        while !Task.isCancelled {
-            let (r, g, b) = hsvToRgb(hue: hue, saturation: 1, value: 1)
-            try await controller.setColor(red: r, green: g, blue: b, brightness: bri)
-            isConnected = true
-            lastError = nil
-            hue = (hue + 0.005 * speed * 5).truncatingRemainder(dividingBy: 1)
-            try await Task.sleep(nanoseconds: frameInterval)
-        }
-    }
-
-    private func hsvToRgb(hue: Double, saturation: Double, value: Double) -> (UInt8, UInt8, UInt8) {
-        let h = hue * 6
-        let i = floor(h)
-        let f = h - i
-        let p = value * (1 - saturation)
-        let q = value * (1 - saturation * f)
-        let t = value * (1 - saturation * (1 - f))
-        let (r, g, b): (Double, Double, Double)
-        switch Int(i) % 6 {
-        case 0: (r, g, b) = (value, t, p)
-        case 1: (r, g, b) = (q, value, p)
-        case 2: (r, g, b) = (p, value, t)
-        case 3: (r, g, b) = (p, q, value)
-        case 4: (r, g, b) = (t, p, value)
-        default: (r, g, b) = (value, p, q)
-        }
-        return (UInt8(r * 255), UInt8(g * 255), UInt8(b * 255))
     }
 }
