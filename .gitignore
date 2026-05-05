@@ -1,0 +1,15 @@
+# Build artifacts
+.build/
+.swiftpm/
+*.xcodeproj/
+*.xcworkspace/
+DerivedData/
+
+# Built app bundle
+G6Lighting.app/
+
+# macOS metadata
+.DS_Store
+*.swp
+.idea/
+.vscode/
