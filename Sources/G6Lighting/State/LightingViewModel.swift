@@ -2,36 +2,47 @@ import Foundation
 import Combine
 
 @MainActor
-final class LightingEngine: ObservableObject {
+final class LightingViewModel: ObservableObject {
     @Published private(set) var lastError: String?
     @Published private(set) var isConnected: Bool = false
 
+    let settings: SettingsStore
     private let device: G6Device
-    private let settings: Settings
     private var animationTask: Task<Void, Never>?
-    private var settingsCancellables: Set<AnyCancellable> = []
+    private var cancellables: Set<AnyCancellable> = []
     private var deviceMonitor: DeviceMonitor?
     private var wakeMonitor: WakeMonitor?
 
-    init(settings: Settings, device: G6Device = .makeReal()) {
+    init(
+        settings: SettingsStore,
+        device: G6Device,
+        installSystemMonitors: Bool = true
+    ) {
         self.settings = settings
         self.device = device
 
         settings.objectWillChange
             .debounce(for: .milliseconds(80), scheduler: DispatchQueue.main)
-            .sink { [weak self] _ in
-                self?.restart()
-            }
-            .store(in: &settingsCancellables)
+            .sink { [weak self] _ in self?.restart() }
+            .store(in: &cancellables)
 
+        if installSystemMonitors {
+            installMonitors()
+        }
+        restart()
+    }
+
+    private func installMonitors() {
         deviceMonitor = DeviceMonitor(
             vendorID: G6Protocol.vendorID,
             productID: G6Protocol.productID
         ) { [weak self] event in
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 guard let self else { return }
-                if case .connected = event { self.restart() }
-                if case .disconnected = event { self.isConnected = false }
+                switch event {
+                case .connected: self.restart()
+                case .disconnected: self.isConnected = false
+                }
             }
         }
 
@@ -40,8 +51,6 @@ final class LightingEngine: ObservableObject {
                 self?.restart()
             }
         }
-
-        restart()
     }
 
     func restart() {
@@ -62,14 +71,9 @@ final class LightingEngine: ObservableObject {
                 return
             }
 
-            let baseColor = RGBColor(
-                red: UInt8(settings.red),
-                green: UInt8(settings.green),
-                blue: UInt8(settings.blue)
-            )
             let effect = EffectFactory.make(
                 mode: settings.mode,
-                baseColor: baseColor,
+                baseColor: settings.color,
                 brightnessPercent: settings.brightness,
                 breathingSpeed: settings.breathingSpeed,
                 cycleSpeed: settings.cycleSpeed

@@ -19,8 +19,8 @@ private let presets: [PresetSwatch] = [
 ]
 
 struct ContentView: View {
-    @EnvironmentObject var settings: Settings
-    @EnvironmentObject var engine: LightingEngine
+    @EnvironmentObject var settings: SettingsStore
+    @EnvironmentObject var engine: LightingViewModel
     @EnvironmentObject var autoLaunch: AutoLaunch
 
     @State private var hexInput: String = ""
