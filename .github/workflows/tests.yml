@@ -23,21 +23,28 @@ jobs:
           swift --version
           xcrun --show-sdk-path
 
-      - name: Locate Testing.framework
+      - name: Locate Testing.framework (macOS variant)
         id: testing-fw
         run: |
-          # On Xcode toolchains the Testing.framework lives somewhere under the
-          # toolchain dir (path varies by Xcode/Swift version). Find it once
-          # and export its parent dir as DYLD_FRAMEWORK_PATH for the run steps.
+          # On Xcode toolchains the Testing.framework ships per-platform.
+          # Find the macOS one, ignoring iOS / tvOS / watchOS variants.
           DEV_DIR=$(xcode-select -p)
-          DIR=$(find "$DEV_DIR/Toolchains" "$DEV_DIR/Platforms" \
-                  -name 'Testing.framework' -type d 2>/dev/null | head -1)
+          DIR=$(find "$DEV_DIR" -name 'Testing.framework' -type d 2>/dev/null \
+                  | grep -iE '/macosx|/MacOSX' \
+                  | head -1)
+          if [ -z "$DIR" ]; then
+            DIR=$(find "$DEV_DIR" -name 'Testing.framework' -type d 2>/dev/null \
+                    | grep -viE 'iphone|appletv|watch|simulator|driverkit' \
+                    | head -1)
+          fi
           if [ -z "$DIR" ]; then
             echo "ERROR: Testing.framework not found under $DEV_DIR" >&2
+            find "$DEV_DIR" -name 'Testing.framework' -type d 2>/dev/null
             exit 1
           fi
           PARENT=$(dirname "$DIR")
           echo "Found: $DIR"
+          echo "Parent (DYLD_FRAMEWORK_PATH): $PARENT"
           echo "framework_dir=$PARENT" >> "$GITHUB_OUTPUT"
 
       - name: Build (release)
