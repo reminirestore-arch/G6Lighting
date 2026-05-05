@@ -60,5 +60,6 @@ EOF
 codesign --force --sign - --timestamp=none "$BUNDLE_DIR" 2>/dev/null || true
 
 echo "==> Done: $BUNDLE_DIR"
-echo "    Run with: open \"$BUNDLE_DIR\""
-echo "    Or directly: \"$BUNDLE_DIR/Contents/MacOS/$APP_NAME\""
+echo "    Run with:  open \"$BUNDLE_DIR\""
+echo "    Or:        \"$BUNDLE_DIR/Contents/MacOS/$APP_NAME\""
+echo "    Tests:     swift run G6LightingTestRunner --testing-library swift-testing"
