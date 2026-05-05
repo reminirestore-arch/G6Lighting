@@ -1,8 +1,5 @@
 import Foundation
 import Combine
-import AppKit
-import IOKit
-import IOKit.hid
 
 @MainActor
 final class LightingEngine: ObservableObject {
@@ -13,9 +10,8 @@ final class LightingEngine: ObservableObject {
     private let settings: Settings
     private var animationTask: Task<Void, Never>?
     private var settingsCancellables: Set<AnyCancellable> = []
-    private let frameInterval: UInt64 = 33_000_000  // ~30 fps
-    private var hidManager: IOHIDManager?
-    private var wakeObserver: NSObjectProtocol?
+    private var deviceMonitor: DeviceMonitor?
+    private var wakeMonitor: WakeMonitor?
 
     init(settings: Settings, device: G6Device = .makeReal()) {
         self.settings = settings
@@ -28,57 +24,24 @@ final class LightingEngine: ObservableObject {
             }
             .store(in: &settingsCancellables)
 
-        startDeviceMonitor()
-        startWakeMonitor()
-        restart()
-    }
-
-    deinit {
-        if let mgr = hidManager {
-            IOHIDManagerUnscheduleFromRunLoop(mgr, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
-            IOHIDManagerClose(mgr, IOOptionBits(kIOHIDOptionsTypeNone))
-        }
-        if let obs = wakeObserver {
-            NSWorkspace.shared.notificationCenter.removeObserver(obs)
-        }
-    }
-
-    private func startDeviceMonitor() {
-        let mgr = IOHIDManagerCreate(kCFAllocatorDefault, IOOptionBits(kIOHIDOptionsTypeNone))
-        let matching: [String: Any] = [
-            kIOHIDVendorIDKey: Int(G6Protocol.vendorID),
-            kIOHIDProductIDKey: Int(G6Protocol.productID),
-        ]
-        IOHIDManagerSetDeviceMatching(mgr, matching as CFDictionary)
-        IOHIDManagerScheduleWithRunLoop(mgr, CFRunLoopGetMain(), CFRunLoopMode.defaultMode.rawValue)
-        IOHIDManagerOpen(mgr, IOOptionBits(kIOHIDOptionsTypeNone))
-
-        let context = Unmanaged.passUnretained(self).toOpaque()
-        let callback: IOHIDDeviceCallback = { context, _, _, _ in
-            guard let context = context else { return }
-            let engine = Unmanaged<LightingEngine>.fromOpaque(context).takeUnretainedValue()
-            DispatchQueue.main.async {
-                // Small delay so device fully enumerates before we send
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-                    engine.restart()
-                }
+        deviceMonitor = DeviceMonitor(
+            vendorID: G6Protocol.vendorID,
+            productID: G6Protocol.productID
+        ) { [weak self] event in
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                guard let self else { return }
+                if case .connected = event { self.restart() }
+                if case .disconnected = event { self.isConnected = false }
             }
         }
-        IOHIDManagerRegisterDeviceMatchingCallback(mgr, callback, context)
-        hidManager = mgr
-    }
 
-    private func startWakeMonitor() {
-        wakeObserver = NSWorkspace.shared.notificationCenter.addObserver(
-            forName: NSWorkspace.didWakeNotification,
-            object: nil,
-            queue: .main
-        ) { [weak self] _ in
-            // Resend after wake; the device may have lost color state during sleep
+        wakeMonitor = WakeMonitor { [weak self] in
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                 self?.restart()
             }
         }
+
+        restart()
     }
 
     func restart() {
@@ -90,7 +53,6 @@ final class LightingEngine: ObservableObject {
 
     private func run() async {
         do {
-            // Apply volume-knob ring LED state first (single shot, persisted in firmware)
             try await device.setRingLed(enabled: settings.ringLedOn)
 
             if !settings.isOn {

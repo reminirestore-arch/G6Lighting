@@ -1,4 +1,5 @@
 import Foundation
+import os
 
 /// In-memory transport for tests and previews. Records every report it receives,
 /// optionally fails on demand, and offers helpers to inspect what was sent.
@@ -9,41 +10,45 @@ final class MockHIDTransport: HIDTransport, @unchecked Sendable {
         case always
     }
 
-    private let lock = NSLock()
-    private var _sentReports: [[UInt8]] = []
-    private var _failureMode: FailureMode = .never
-    private var _failureError: HIDTransportError = .deviceNotFound
+    private struct State {
+        var sentReports: [[UInt8]] = []
+        var failureMode: FailureMode = .never
+        var failureError: HIDTransportError = .deviceNotFound
+    }
+
+    private let state = OSAllocatedUnfairLock(initialState: State())
 
     var sentReports: [[UInt8]] {
-        lock.lock(); defer { lock.unlock() }
-        return _sentReports
+        state.withLock { $0.sentReports }
     }
 
     func setFailureMode(_ mode: FailureMode, error: HIDTransportError = .deviceNotFound) {
-        lock.lock(); defer { lock.unlock() }
-        _failureMode = mode
-        _failureError = error
+        state.withLock {
+            $0.failureMode = mode
+            $0.failureError = error
+        }
     }
 
     func reset() {
-        lock.lock(); defer { lock.unlock() }
-        _sentReports.removeAll()
-        _failureMode = .never
+        state.withLock {
+            $0.sentReports.removeAll()
+            $0.failureMode = .never
+        }
     }
 
     func send(reports: [[UInt8]]) async throws {
-        lock.lock()
-        let mode = _failureMode
-        let error = _failureError
-        if mode == .once { _failureMode = .never }
-        lock.unlock()
-
-        if mode != .never {
-            throw error
+        let result: HIDTransportError? = state.withLock {
+            let mode = $0.failureMode
+            let err = $0.failureError
+            if mode == .once { $0.failureMode = .never }
+            if mode != .never {
+                return err
+            }
+            $0.sentReports.append(contentsOf: reports)
+            return nil
         }
-
-        lock.lock()
-        _sentReports.append(contentsOf: reports)
-        lock.unlock()
+        if let result {
+            throw result
+        }
     }
 }
